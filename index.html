@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"
+        integrity="sha512-emSwuKiMyYedRwflbZB2ghzX8Cw8fmNVgZ6yQNNXXagFzFOaQmbvQ1vmDkddHjm5AITcBIZfC7k4ShQSjgPAmQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+
+    <div class="w3-container w3-display-middle w3-card-4 w3-light-grey" style="max-width: 400px;">
+        <div class="w3-container w3-center w3-padding-16">
+            <h2 id="title">Login Form</h2>
+        </div>
+        <main id="myContent" class="w3-container">
+            <label for="username" class="w3-text-blue">Username:</label>
+            <input class="w3-input w3-border" type="text" id="username" name="username" required>
+
+            <label for="password" class="w3-text-blue">Password:</label>
+            <input class="w3-input w3-border" type="password" id="password" name="password" required>
+
+            <button onclick="login()" class="w3-btn w3-blue w3-margin-top">Login</button>
+        </main>
+
+        <div class="w3-container w3-padding-16">
+            <button onclick="getDashboard()" class="w3-btn w3-blue w3-margin-top">Dashboard</button>
+            <button onclick="getSettings()" class="w3-btn w3-blue w3-margin-top">Settings</button>
+            <button onclick="logout()" class="w3-btn w3-blue w3-margin-top">Log Out</button>
+        </div>
+    </div>
+
+    <script>
+
+        function login() {
+            const data = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+            }
+            axios.post('/api/login', data)
+                .then(res => {
+                    console.log(res);
+                    document.getElementById('username').value = ''
+                    document.getElementById('password').value = ''
+                    if (res && res.data && res.data.success) {
+                        const token = res.data.token;
+                        localStorage.setItem('jwt', token);
+                        document.getElementById('title').innerHTML = 'Success',
+                        document.getElementById('myContent').innerHTML = ''
+                        history.pushState(null, null, "http://127.0.0.1:3000/login");
+                    }else{
+                        document.getElementById('title').innerHTML = 'Login Incorrect'
+                    }
+                })
+                .catch(error => {
+                    handle_error(error);
+                });
+        }
+
+        function getDashboard() {
+            axios.get('/api/dashboard', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('jwt')}`
+                }
+            })
+                .then(res => {
+                    console.log(res);
+                    if (res && res.data && res.data.success) {
+                        document.getElementById('title').innerHTML = 'Dashboard',
+                        document.getElementById('myContent').innerHTML = res.data.myContent
+                        history.pushState(null, null, "http://127.0.0.1:3000/dashboard");
+                        
+
+                    }else{
+                        window.location.href = "http://127.0.0.1:3000/";
+                    }
+                })
+                .catch(error => {
+                    handle_error(error);
+                });
+
+        }
+
+        function getSettings() {
+            axios.get('/api/settings', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('jwt')}`
+                }
+            })
+                .then(res => {
+                    console.log(res);
+                    if (res && res.data && res.data.success) {
+                        document.getElementById('title').innerHTML = 'Settings',
+                            document.getElementById('myContent').innerHTML = res.data.myContent
+                            history.pushState(null, null, "http://127.0.0.1:3000/settings");
+
+                    }else{
+                        window.location.href = "http://127.0.0.1:3000/";
+                    }
+                })
+                .catch(error => {
+                    handle_error(error);
+                });
+
+        }
+        function onLoad(){
+            if (localStorage.getItem('jwt')){
+                getDashboard();
+            }
+        }
+        function logout(){
+            localStorage.removeItem('jwt')
+            window.location.href = "http://127.0.0.1:3000/";
+        }
+        function handle_error(error){
+            if (error.response && error.response.status === 401) {
+                console.error("Unauthorized! 401");
+                logout()
+            } else {           
+                console.error(error.message);
+            }
+
+        }
+        onLoad();
+    </script>
+
+</body>
+
+</html>
